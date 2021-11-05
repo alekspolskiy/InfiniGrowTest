@@ -1,36 +1,42 @@
 import json
+from app.metrics import create_metrics_dataset_v1, create_metrics_dataset_v2
+from app.identities import merge_identities
 
 
-def get_data_from_json():
-    with open("data/test1.json", "r") as file:
+def get_data_from_json(path):
+    with open(path, "r") as file:
         json_data = json.load(file)
     return json_data
 
 
-def write_to_json(json_data):
-    with open('data/result.json', 'w', encoding='utf-8') as f:
-        json.dump(json_data, f, ensure_ascii=False, indent=4)
-
-
-def create_data_set(data):
-    unique_filters = []
-    for obj in [i for i in data["metricsCustomFilters"].values()]:
-        if obj not in unique_filters:
-            unique_filters.append(obj)
-
-    def generator(unique_filter):
-        res_dict = {
-            "metrics": [],
-            "filters": []
-        }
-        for metric, data_filter in data["metricsCustomFilters"].items():
-            if unique_filter == data_filter:
-                res_dict["metrics"].append(metric)
-        res_dict["filters"].append(unique_filter)
-        return res_dict
-
-    return list(map(generator, unique_filters))
+def write_to_json(json_data, path):
+    with open(path, 'w', encoding='utf-8') as file:
+        json.dump(json_data, file, ensure_ascii=False, indent=4)
 
 
 if __name__ == "__main__":
-    write_to_json(create_data_set(get_data_from_json()))
+    # metrics v1
+    write_to_json(
+        json_data=create_metrics_dataset_v1(
+            data=get_data_from_json(
+                path="data/metrics.json"
+            )
+        ),
+        path='data/metrics_result_v1.json'
+    )
+    # metrics v2
+    write_to_json(
+        json_data=create_metrics_dataset_v2(
+            data=get_data_from_json(
+                path="data/metrics.json"
+            )
+        ),
+        path='data/metrics_result_v2.json'
+    )
+    write_to_json(
+        json_data=merge_identities(
+            get_data_from_json(
+                path="data/identities.json"
+            )
+        ),
+        path='data/merged_identities.json')
